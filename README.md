@@ -317,7 +317,7 @@ python main.py
 > Puedes modificar esto según tu sistema
 
 * Usuario: `admin`
-* Contraseña: `1234`
+* Contraseña: `admin123`
 
 ---
 

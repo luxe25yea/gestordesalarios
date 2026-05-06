@@ -2,9 +2,13 @@ from database.connection import get_connection
 from utils.hash import hash_password
 
 def initialize_database():
-    """Crea las tablas necesarias e inserta el usuario por defecto."""
+    """Inicializa la base de datos creando tablas y cargando datos iniciales."""
+    
     conn = get_connection()
     cursor = conn.cursor()
+
+    # Activar claves foráneas en SQLite
+    cursor.execute("PRAGMA foreign_keys = ON;")
 
     # Tabla de usuarios
     cursor.execute('''
@@ -37,10 +41,26 @@ def initialize_database():
     ''')
 
     # Insertar usuario admin si no existe
-    cursor.execute("SELECT * FROM usuarios WHERE username = 'admin'")
+    cursor.execute("SELECT 1 FROM usuarios WHERE username = 'admin'")
     if not cursor.fetchone():
         hashed_pw = hash_password('admin123')
-        cursor.execute("INSERT INTO usuarios (username, password_hash) VALUES (?, ?)", ('admin', hashed_pw))
+        cursor.execute(
+            "INSERT INTO usuarios (username, password_hash) VALUES (?, ?)",
+            ('admin', hashed_pw)
+        )
+
+    # Insertar empleados de prueba
+    cursor.execute("SELECT COUNT(*) FROM empleados")
+    if cursor.fetchone()[0] == 0:
+        empleados_demo = [
+            ("Juan Pérez", "Chofer", 300),
+            ("Ana López", "Administración", 250),
+            ("Carlos Ruiz", "Supervisor", 350)
+        ]
+        cursor.executemany(
+            "INSERT INTO empleados (nombre, puesto, salario_diario) VALUES (?, ?, ?)",
+            empleados_demo
+        )
 
     conn.commit()
     conn.close()
