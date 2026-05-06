@@ -98,7 +98,7 @@ python main.py
 
 **Luis Enrique Hernandez Morales**
 
-Enrique Alexander Bolaños Gutiérrez
+**Enrique Alexander Bolaños Gutiérrez**
 
 ---
 

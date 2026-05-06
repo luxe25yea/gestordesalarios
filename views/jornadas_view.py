@@ -2,6 +2,7 @@ import customtkinter as ctk
 from services.nomina_service import register_workday
 from services.empleado_service import get_all_employees
 from datetime import datetime
+from tkcalendar import Calendar
 
 BG_DARK = "#0f1117"
 CARD_BG = "#1e2535"
@@ -79,8 +80,27 @@ class JornadasView(ctk.CTkScrollableFrame):
 
         self.entry_emp_id = entry(fields, 0, "Ej: 1")
         self.entry_dias   = entry(fields, 1, "Ej: 5")
-        self.entry_fecha  = entry(fields, 2, datetime.now().strftime("%Y-%m-%d"))
+
+        date_frame = ctk.CTkFrame(fields, fg_color="transparent")
+        date_frame.grid(row=1, column=2, sticky="ew", padx=(16, 0))
+        date_frame.columnconfigure(0, weight=1)
+
+        self.entry_fecha = ctk.CTkEntry(
+            date_frame, placeholder_text=datetime.now().strftime("%Y-%m-%d"),
+            height=40, corner_radius=8,
+            border_color=BORDER, fg_color="#0f1117",
+            text_color=TEXT_1, font=ctk.CTkFont("Segoe UI", 12)
+        )
+        self.entry_fecha.grid(row=0, column=0, sticky="ew")
         self.entry_fecha.insert(0, datetime.now().strftime("%Y-%m-%d"))
+
+        btn_cal = ctk.CTkButton(
+            date_frame, text="📅", width=40, height=40,
+            fg_color="#334155", hover_color="#475569", corner_radius=8,
+            font=ctk.CTkFont("Segoe UI Emoji", 16),
+            command=self.open_calendar
+        )
+        btn_cal.grid(row=0, column=1, padx=(4, 0))
 
         # Botón
         btn = ctk.CTkButton(
@@ -98,12 +118,21 @@ class JornadasView(ctk.CTkScrollableFrame):
         self.lbl_status.pack(padx=24, pady=(0, 16), anchor="w")
 
         # ── Tarjeta: Lista de empleados disponibles ───────────────────────────
-        info_card = ctk.CTkFrame(self, corner_radius=14, fg_color=CARD_BG,
+        self.info_card = ctk.CTkFrame(self, corner_radius=14, fg_color=CARD_BG,
                                  border_width=1, border_color=BORDER)
-        info_card.pack(fill="x", padx=30, pady=(20, 24))
+        self.info_card.pack(fill="x", padx=30, pady=(20, 24))
+
+        # Contenedor dinámico de empleados
+        self.emp_list_frame = ctk.CTkFrame(self.info_card, fg_color="transparent")
+        self.emp_list_frame.pack(fill="x")
+        self.refresh()
+
+    def refresh(self):
+        for widget in self.emp_list_frame.winfo_children():
+            widget.destroy()
 
         ctk.CTkLabel(
-            info_card,
+            self.emp_list_frame,
             text="Empleados Disponibles",
             font=ctk.CTkFont("Segoe UI", 13, "bold"),
             text_color=TEXT_1
@@ -116,7 +145,7 @@ class JornadasView(ctk.CTkScrollableFrame):
 
         if empleados:
             for emp in empleados:
-                row = ctk.CTkFrame(info_card, fg_color="#1a2030", corner_radius=8)
+                row = ctk.CTkFrame(self.emp_list_frame, fg_color="#1a2030", corner_radius=8)
                 row.pack(fill="x", padx=16, pady=3)
                 ctk.CTkLabel(
                     row,
@@ -126,15 +155,32 @@ class JornadasView(ctk.CTkScrollableFrame):
                 ).pack(padx=14, pady=8, anchor="w")
         else:
             ctk.CTkLabel(
-                info_card,
+                self.emp_list_frame,
                 text="No hay empleados registrados.",
                 font=ctk.CTkFont("Segoe UI", 12),
                 text_color=TEXT_3
             ).pack(padx=20, pady=12)
 
-        ctk.CTkFrame(info_card, height=1, fg_color=BORDER).pack(
+        ctk.CTkFrame(self.emp_list_frame, height=1, fg_color=BORDER).pack(
             fill="x", padx=16, pady=(8, 16)
         )
+
+    def open_calendar(self):
+        top = ctk.CTkToplevel(self)
+        top.title("Seleccionar Fecha")
+        top.geometry("300x250")
+        top.attributes("-topmost", True)
+        top.grab_set()
+
+        cal = Calendar(top, selectmode='day', date_pattern='yyyy-mm-dd')
+        cal.pack(pady=20, padx=20, fill="both", expand=True)
+
+        def set_date():
+            self.entry_fecha.delete(0, "end")
+            self.entry_fecha.insert(0, cal.get_date())
+            top.destroy()
+
+        ctk.CTkButton(top, text="Seleccionar", command=set_date).pack(pady=10)
 
     def on_register(self):
         try:

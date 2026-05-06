@@ -1,3 +1,5 @@
 customtkinter
 matplotlib
 reportlab
+Pillow
+tkcalendar

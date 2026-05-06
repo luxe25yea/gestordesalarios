@@ -40,7 +40,7 @@ class EmpleadosView(ctk.CTkScrollableFrame):
         ).pack(side="left")
 
         ctk.CTkButton(
-            header, text="🔄  Actualizar", width=120, height=36,
+            header, text="🔄  Actualizar", width=120, height=55,
             corner_radius=8, fg_color="#263046", hover_color=CARD_BG,
             text_color=ACCENT, font=ctk.CTkFont("Segoe UI", 12),
             command=self.controller.load_employees

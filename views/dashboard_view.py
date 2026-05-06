@@ -2,8 +2,11 @@ import customtkinter as ctk
 from views.empleados_view import EmpleadosView
 from views.jornadas_view import JornadasView
 from views.reportes_view import ReportesView
+from views.settings_view import SettingsView
 from services.empleado_service import get_all_employees
 from services.nomina_service import get_report_data
+import os
+from PIL import Image
 
 # ─── Colores del tema ────────────────────────────────────────────────────────
 BG_DARK   = "#0f1117"
@@ -47,9 +50,10 @@ def make_card(parent, title, value, icon, color):
 
 
 class DashboardView(ctk.CTk):
-    def __init__(self):
+    def __init__(self, current_username="admin"):
         super().__init__()
-        self.title("Aguas Moya – Dashboard")
+        self.current_username = current_username
+        self.title("Aguas Moya - Panel de Control")
         self.geometry("1100x680")
         self.minsize(900, 600)
         self.configure(fg_color=BG_DARK)
@@ -77,7 +81,15 @@ class DashboardView(ctk.CTk):
         # Branding
         brand = ctk.CTkFrame(sidebar, fg_color="transparent")
         brand.pack(fill="x", padx=20, pady=(24, 8))
-        ctk.CTkLabel(brand, text="💧", font=("Segoe UI Emoji", 28)).pack(side="left")
+        
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "LogoMoyaMejorado.png")
+        try:
+            self.dashboard_logo = ctk.CTkImage(light_image=Image.open(logo_path), dark_image=Image.open(logo_path), size=(45, 45))
+            ctk.CTkLabel(brand, text="", image=self.dashboard_logo).pack(side="left")
+        except Exception as e:
+            print("Error loading dashboard logo:", e)
+           
+
         ctk.CTkLabel(
             brand, text="Aguas Moya",
             font=ctk.CTkFont("Segoe UI", 16, "bold"),
@@ -95,6 +107,7 @@ class DashboardView(ctk.CTk):
             ("empleados",  "👥",  "Empleados"),
             ("jornadas",   "📅",  "Jornadas"),
             ("reportes",   "📊",  "Reportes"),
+            ("configuracion", "⚙️", "Configuración"),
         ]
 
         self._nav_buttons = {}
@@ -132,6 +145,7 @@ class DashboardView(ctk.CTk):
         self.frames["empleados"] = EmpleadosView(self.content)
         self.frames["jornadas"]  = JornadasView(self.content)
         self.frames["reportes"]  = ReportesView(self.content)
+        self.frames["configuracion"] = SettingsView(self.content, current_username=self.current_username)
 
     # ── Vista de Inicio ───────────────────────────────────────────────────────
     def _build_home(self):
@@ -248,5 +262,9 @@ class DashboardView(ctk.CTk):
         if name == "inicio":
             self.frames["inicio"].destroy()
             self.frames["inicio"] = self._build_home()
+        elif hasattr(self.frames[name], 'refresh'):
+            self.frames[name].refresh()
+        elif name == "empleados" and hasattr(self.frames[name], 'controller') and hasattr(self.frames[name].controller, 'load_employees'):
+            self.frames[name].controller.load_employees()
 
         self.frames[name].grid(row=0, column=0, sticky="nsew", padx=0, pady=0)
